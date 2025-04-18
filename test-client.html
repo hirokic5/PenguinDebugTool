@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Penguin Monitor Test Client</title>
+    <style>
+        #penguinData {
+            font-family: monospace;
+            white-space: pre;
+            padding: 10px;
+            background: #f0f0f0;
+            height: 500px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Penguin Monitor Test Client</h1>
+    <div id="penguinData"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:52697');
+        const penguinData = document.getElementById('penguinData');
+
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                penguinData.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                console.error('Error parsing message:', e);
+            }
+        };
+
+        ws.onopen = function() {
+            penguinData.textContent = 'Connected to server\n';
+        };
+
+        ws.onerror = function(error) {
+            penguinData.textContent += `Error: ${error.message}\n`;
+        };
+
+        ws.onclose = function() {
+            penguinData.textContent += 'Disconnected from server\n';
+        };
+    </script>
+</body>
+</html>

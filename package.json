@@ -1,0 +1,30 @@
+{
+  "name": "penguin-debug-tool",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max-old-space-size=8192 server.js",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/styled-components": "^5.1.34",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.4.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "styled-components": "^6.1.17",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.1",
+    "ws": "^8.18.1"
+  },
+  "description": ""
+}
