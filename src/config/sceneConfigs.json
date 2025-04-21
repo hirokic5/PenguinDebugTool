@@ -1,0 +1,18 @@
+{
+  "scenes": {
+    "Proto": {
+      "xMin": -0.2,
+      "xMax": 80,
+      "zMin": -0.2,
+      "zMax": 100,
+      "description": "Proto scene configuration"
+    },
+    "Maze": {
+      "xMin": -160,
+      "xMax": 150,
+      "zMin": -55,
+      "zMax": 360,
+      "description": "Sample Maze scene configuration"
+    }
+  }
+}
