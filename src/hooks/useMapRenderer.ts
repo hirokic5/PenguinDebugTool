@@ -44,8 +44,7 @@ export const useMapRenderer = (props: MapRendererProps) => {
     if (!leaderPathDrawerRef.current) {
       // Create mapping functions for coordinates
       const mapX = (x: number) => mapValue(x, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
-      // Z座標は上下反転させる（Unityの座標系に合わせる）
-      const mapZ = (z: number) => canvas.height - mapValue(z, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+      const mapZ = (z: number) => mapValue(z, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
       
       leaderPathDrawerRef.current = new LeaderPathDrawer(ctx, mapX, mapZ);
     }
