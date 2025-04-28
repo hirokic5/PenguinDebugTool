@@ -218,6 +218,26 @@ const PenguinMap = () => {
       
       // Draw enemies
       if (showEnemies) {
+        // Generate a unique color for each enemy based on their ID
+        const getEnemyColor = (enemyId: string, isAttacking: boolean): string => {
+          if (isAttacking) {
+            return '#FF0000'; // Bright red for attacking enemies
+          }
+          
+          // Create a hash from the enemy ID to generate a consistent color
+          let hash = 0;
+          for (let i = 0; i < enemyId.length; i++) {
+            hash = enemyId.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          
+          // Generate a red shade (keeping R high, varying G and B in lower ranges)
+          const r = 220 + (hash & 35);  // 220-255 range for red
+          const g = 20 + (hash & 60);   // 20-80 range for green
+          const b = 20 + (hash & 60);   // 20-80 range for blue
+          
+          return `rgb(${r}, ${g}, ${b})`;
+        };
+        
         enemies.forEach(enemy => {
           const worldX = enemy.position.x;
           const worldZ = enemy.position.z;
@@ -226,15 +246,9 @@ const PenguinMap = () => {
           const canvasX = mapValue(worldX, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
           const canvasY = mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
           
-          // Draw enemy
-          ctx.beginPath();
-          
-          // Different colors for different enemy states
-          if (enemy.isAttacking) {
-            ctx.fillStyle = '#FF0000'; // Red for attacking enemies
-          } else {
-            ctx.fillStyle = '#FF9800'; // Orange for regular enemies
-          }
+          // Get color based on enemy ID and state
+          const enemyColor = getEnemyColor(enemy.enemyId, enemy.isAttacking);
+          ctx.fillStyle = enemyColor;
           
           // Draw enemy as a triangle
           ctx.beginPath();
@@ -244,10 +258,10 @@ const PenguinMap = () => {
           ctx.closePath();
           ctx.fill();
           
-          // Draw name
+          // Draw name with enemy ID for better identification
           ctx.fillStyle = '#000000';
           ctx.font = '10px Arial';
-          ctx.fillText(enemy.name, canvasX + 8, canvasY + 4);
+          ctx.fillText(`${enemy.name} (${enemy.enemyId.substring(0, 4)})`, canvasX + 8, canvasY + 4);
           
           // Draw guard radius if applicable
           if (enemy.areaGuardEnabled) {
@@ -256,7 +270,8 @@ const PenguinMap = () => {
               0, canvas.width);
             
             ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 152, 0, 0.3)';
+            // Use a transparent version of the enemy color for the guard radius
+            ctx.strokeStyle = `${enemyColor.replace('rgb', 'rgba').replace(')', ', 0.3)')}`;
             ctx.lineWidth = 1;
             ctx.arc(canvasX, canvasY, guardRadiusCanvas, 0, Math.PI * 2);
             ctx.stroke();
@@ -349,8 +364,8 @@ const PenguinMap = () => {
             <span>Regular Penguin</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ width: '0', height: '0', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '20px solid #FF9800', marginRight: '8px' }}></div>
-            <span>Enemy</span>
+            <div style={{ width: '0', height: '0', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '20px solid #D02020', marginRight: '8px' }}></div>
+            <span>Enemy (Red Shades)</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ width: '0', height: '0', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '20px solid #FF0000', marginRight: '8px' }}></div>
