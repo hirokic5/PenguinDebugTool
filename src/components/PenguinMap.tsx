@@ -60,8 +60,34 @@ const PenguinMap = () => {
   const [leaderPaths, setLeaderPaths] = useState<Map<string, PathPoint[]>>(new Map());
 
   // Get available scene configurations
-  const sceneOptions = Object.keys(sceneConfigs);
-  const currentConfig: SceneConfig = (sceneConfigs as any)[selectedScene] || (sceneConfigs as any).default;
+  const sceneOptions = Object.keys((sceneConfigs as any).scenes || {});
+  
+  // Create a properly formatted config object from the JSON structure
+  const getConfigFromScene = (sceneName: string): SceneConfig => {
+    const sceneData = (sceneConfigs as any).scenes?.[sceneName];
+    if (!sceneData) {
+      // Default fallback if scene not found
+      return {
+        worldBounds: {
+          minX: -50,
+          maxX: 50,
+          minZ: -50,
+          maxZ: 50
+        }
+      };
+    }
+    
+    return {
+      worldBounds: {
+        minX: sceneData.xMin,
+        maxX: sceneData.xMax,
+        minZ: sceneData.zMin,
+        maxZ: sceneData.zMax
+      }
+    };
+  };
+  
+  const currentConfig: SceneConfig = getConfigFromScene(selectedScene);
 
   useEffect(() => {
     const connectWebSocket = () => {
