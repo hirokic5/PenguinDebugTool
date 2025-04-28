@@ -19,6 +19,10 @@ interface PenguinData {
   sensing: number;
   isMale: boolean;
   lastUpdate: number;
+  distanceToGoal: number;
+  followerCount: number;
+  followingLeaderId: string;
+  trustLevel: number;
 }
 
 const Card = styled.div<{ isPlayable: boolean }>`
@@ -123,6 +127,15 @@ const PenguinCard: React.FC<PenguinCardProps> = ({ penguin }) => {
         <div>Physical State: {penguin.physicalState}</div>
         <div>Gender: {penguin.isMale ? 'Male' : 'Female'}</div>
         <div>Goal: {penguin.isGoal ? 'Yes' : 'No'}</div>
+        <div>Distance to Goal: {penguin.distanceToGoal === Number.POSITIVE_INFINITY ? '∞' : penguin.distanceToGoal.toFixed(1)} units</div>
+        {penguin.followingLeaderId ? (
+          <>
+            <div>Following Leader: {penguin.followingLeaderId}</div>
+            <div>Trust Level: {(penguin.trustLevel * 100).toFixed(1)}%</div>
+          </>
+        ) : (
+          <div>Followers: {penguin.followerCount}</div>
+        )}
       </div>
     </Card>
   );

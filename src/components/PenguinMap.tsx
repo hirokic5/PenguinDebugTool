@@ -21,6 +21,7 @@ interface PenguinData {
   speed: number;
   sensing: number;
   isMale: boolean;
+  followerCount: number;
 }
 
 interface WebSocketMessage {
@@ -76,6 +77,55 @@ const LegendContainer = styled.div`
 
   .state-name {
     color: #666;
+  }
+`;
+
+const FollowersGraph = styled.div`
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+
+  h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+  }
+
+  .graph-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .leader-name {
+    width: 60px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  .bar-container {
+    flex-grow: 1;
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    background-color: #9C27B0;
+    transition: width 0.3s ease;
+  }
+
+  .count {
+    width: 30px;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
   }
 `;
 
@@ -458,6 +508,26 @@ const PenguinMap = () => {
       </GridContainer>
 
       <LegendContainer>
+        <FollowersGraph>
+          <h3>リーダーごとのフォロワー数</h3>
+          {['Luca', 'Miro', 'Ellie', 'Sora'].map(leaderName => {
+            const leader = penguins.find(p => p.name === leaderName);
+            const followerCount = leader?.followerCount || 0;
+            const maxFollowers = Math.max(...penguins.filter(p => ['Luca', 'Miro', 'Ellie', 'Sora'].includes(p.name)).map(p => p.followerCount || 0));
+            const percentage = maxFollowers > 0 ? (followerCount / maxFollowers) * 100 : 0;
+
+            return (
+              <div key={leaderName} className="graph-bar">
+                <div className="leader-name">{leaderName}</div>
+                <div className="bar-container">
+                  <div className="bar" style={{ width: `${percentage}%` }} />
+                </div>
+                <div className="count">{followerCount}</div>
+              </div>
+            );
+          })}
+        </FollowersGraph>
+
         <div className="legend-section">
           <h3>物理的状態 (PhysicalState)</h3>
           <div className="legend-item">

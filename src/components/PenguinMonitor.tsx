@@ -20,7 +20,11 @@ interface PenguinData {
   speed: number;
   sensing: number;
   isMale: boolean;
+  distanceToGoal: number;
   lastUpdate: number;
+  followerCount: number;
+  followingLeaderId: string;
+  trustLevel: number;
 }
 
 interface WebSocketMessage {
