@@ -30,14 +30,18 @@ const wss = new WebSocket.Server({
 // Store connected clients with their last broadcast timestamp
 const clients = new Map();
 
-// Store penguin data with a fixed size limit
-const MAX_PENGUINS = 1000; // Adjust based on your needs
-let penguinData = new Map();
+// Store entity data (penguins and enemies) with a fixed size limit
+const MAX_ENTITIES = 1000; // Adjust based on your needs
+let entityData = new Map();
 
 // Utility function to broadcast updates efficiently
 function broadcastUpdates(excludeClient = null, force = false) {
     const now = Date.now();
-    const penguins = Array.from(penguinData.values());
+    const entities = Array.from(entityData.values());
+    
+    // Classify by entity type
+    const penguins = entities.filter(entity => !entity.entityType || entity.entityType === 'penguin');
+    const enemies = entities.filter(entity => entity.entityType === 'enemy');
     
     clients.forEach((lastBroadcast, client) => {
         if (client === excludeClient) return;
@@ -47,8 +51,10 @@ function broadcastUpdates(excludeClient = null, force = false) {
         if (force || now - lastBroadcast >= 100) {
             try {
                 client.send(JSON.stringify({
-                    type: 'penguinUpdate',
-                    penguins: penguins
+                    type: 'entityUpdate',
+                    entities: entities,
+                    penguins: penguins,
+                    enemies: enemies
                 }));
                 clients.set(client, now);
             } catch (err) {
@@ -65,14 +71,25 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
+            const entityId = data.penguinId || data.enemyId || data.entityId;
+            
+            if (!entityId) {
+                console.warn('Received data without ID, ignoring');
+                return;
+            }
             
             // Enforce size limit
-            if (penguinData.size >= MAX_PENGUINS && !penguinData.has(data.penguinId)) {
-                console.warn('Maximum penguin limit reached, ignoring new penguin');
+            if (entityData.size >= MAX_ENTITIES && !entityData.has(entityId)) {
+                console.warn('Maximum entity limit reached, ignoring new entity');
                 return;
             }
 
-            penguinData.set(data.penguinId, {
+            // Set default entityType if not provided
+            if (!data.entityType) {
+                data.entityType = 'penguin'; // Backward compatibility
+            }
+
+            entityData.set(entityId, {
                 ...data,
                 lastUpdate: Date.now()
             });
@@ -95,11 +112,17 @@ wss.on('connection', (ws) => {
     });
 
     // Send initial data to new client
-    if (penguinData.size > 0) {
+    if (entityData.size > 0) {
         try {
+            const entities = Array.from(entityData.values());
+            const penguins = entities.filter(entity => !entity.entityType || entity.entityType === 'penguin');
+            const enemies = entities.filter(entity => entity.entityType === 'enemy');
+            
             ws.send(JSON.stringify({
-                type: 'penguinUpdate',
-                penguins: Array.from(penguinData.values())
+                type: 'entityUpdate',
+                entities: entities,
+                penguins: penguins,
+                enemies: enemies
             }));
         } catch (err) {
             console.error('Error sending initial data:', err);
@@ -107,14 +130,14 @@ wss.on('connection', (ws) => {
     }
 });
 
-// Clean up stale penguin data (older than 5 seconds)
+// Clean up stale entity data (older than 5 seconds)
 setInterval(() => {
     const now = Date.now();
     let hasChanges = false;
     
-    for (const [id, data] of penguinData.entries()) {
+    for (const [id, data] of entityData.entries()) {
         if (now - data.lastUpdate > 5000) {
-            penguinData.delete(id);
+            entityData.delete(id);
             hasChanges = true;
         }
     }

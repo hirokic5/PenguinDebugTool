@@ -1,36 +1,8 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import PenguinCard from './PenguinCard';
-
-interface PenguinData {
-  penguinId: string;
-  name: string;
-  position: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  status: string;
-  currentTarget: string;
-  isGoal: boolean;
-  isPlayable: boolean;
-  physicalState: string;
-  leadership: number;
-  stamina: number;
-  speed: number;
-  sensing: number;
-  isMale: boolean;
-  distanceToGoal: number;
-  lastUpdate: number;
-  followerCount: number;
-  followingLeaderId: string;
-  trustLevel: number;
-}
-
-interface WebSocketMessage {
-  type: 'penguinUpdate';
-  penguins: PenguinData[];
-}
+import EnemyCard from './EnemyCard';
+import { PenguinData, EnemyData, WebSocketMessage } from '../types/entityTypes';
 
 const Container = styled.div`
   display: grid;
@@ -50,10 +22,42 @@ const ConnectionStatus = styled.div<{ isConnected: boolean }>`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
+const FilterContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+`;
+
+const FilterButton = styled.button<{ active: boolean }>`
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background-color: ${props => props.active ? '#2c3e50' : '#e0e0e0'};
+  color: ${props => props.active ? 'white' : 'black'};
+  cursor: pointer;
+  font-weight: bold;
+  
+  &:hover {
+    background-color: ${props => props.active ? '#2c3e50' : '#c0c0c0'};
+  }
+`;
+
+const EntityCounter = styled.div`
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: #666;
+`;
+
+type FilterType = 'all' | 'penguins' | 'enemies';
+
 const PenguinMonitor = () => {
   const [penguins, setPenguins] = useState<PenguinData[]>([]);
+  const [enemies, setEnemies] = useState<EnemyData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -69,8 +73,12 @@ const PenguinMonitor = () => {
       socket.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          if (data.type === 'penguinUpdate') {
-            setPenguins(data.penguins);
+          if (data.type === 'entityUpdate') {
+            setPenguins(data.penguins || []);
+            setEnemies(data.enemies || []);
+          } else if (data.type === 'penguinUpdate') {
+            // 後方互換性のため
+            setPenguins(data.penguins || []);
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
@@ -100,16 +108,64 @@ const PenguinMonitor = () => {
     };
   }, []);
 
+  // フィルタリングされたエンティティを取得
+  const filteredEntities = () => {
+    switch (filter) {
+      case 'penguins':
+        return { penguins, enemies: [] };
+      case 'enemies':
+        return { penguins: [], enemies };
+      case 'all':
+      default:
+        return { penguins, enemies };
+    }
+  };
+
+  const { penguins: filteredPenguins, enemies: filteredEnemies } = filteredEntities();
+
   return (
     <>
       <ConnectionStatus isConnected={isConnected}>
         {isConnected ? 'Connected' : 'Disconnected'}
       </ConnectionStatus>
+      
+      <FilterContainer>
+        <FilterButton 
+          active={filter === 'all'} 
+          onClick={() => setFilter('all')}
+        >
+          All Entities
+        </FilterButton>
+        <FilterButton 
+          active={filter === 'penguins'} 
+          onClick={() => setFilter('penguins')}
+        >
+          Penguins Only
+        </FilterButton>
+        <FilterButton 
+          active={filter === 'enemies'} 
+          onClick={() => setFilter('enemies')}
+        >
+          Enemies Only
+        </FilterButton>
+      </FilterContainer>
+      
+      <EntityCounter>
+        Showing {filteredPenguins.length} penguins and {filteredEnemies.length} enemies
+      </EntityCounter>
+      
       <Container>
-        {penguins.map(penguin => (
+        {filteredPenguins.map(penguin => (
           <PenguinCard
             key={penguin.penguinId}
             penguin={penguin}
+          />
+        ))}
+        
+        {filteredEnemies.map(enemy => (
+          <EnemyCard
+            key={enemy.enemyId}
+            enemy={enemy}
           />
         ))}
       </Container>

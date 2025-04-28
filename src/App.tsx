@@ -44,12 +44,12 @@ function App() {
     <Router>
       <AppContainer>
         <Header>
-          <h1>Penguin Monitor</h1>
+          <h1>Game Entity Monitor</h1>
         </Header>
         <Navigation>
           <ul>
             <li>
-              <Link to="/">Status Cards</Link>
+              <Link to="/">Entity Status</Link>
             </li>
             <li>
               <Link to="/map">2D Map</Link>

@@ -1,29 +1,5 @@
 import styled from 'styled-components';
-
-interface PenguinData {
-  penguinId: string;
-  name: string;
-  position: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  status: string;
-  currentTarget: string;
-  isGoal: boolean;
-  isPlayable: boolean;
-  physicalState: string;
-  leadership: number;
-  stamina: number;
-  speed: number;
-  sensing: number;
-  isMale: boolean;
-  lastUpdate: number;
-  distanceToGoal: number;
-  followerCount: number;
-  followingLeaderId: string;
-  trustLevel: number;
-}
+import { PenguinData } from '../types/entityTypes';
 
 const Card = styled.div<{ isPlayable: boolean }>`
   background-color: white;
@@ -87,6 +63,19 @@ const Position = styled.div`
   margin-top: 8px;
 `;
 
+const EntityType = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: bold;
+  text-transform: uppercase;
+`;
+
 interface PenguinCardProps {
   penguin: PenguinData;
 }
@@ -94,6 +83,7 @@ interface PenguinCardProps {
 const PenguinCard: React.FC<PenguinCardProps> = ({ penguin }) => {
   return (
     <Card isPlayable={penguin.isPlayable}>
+      <EntityType>Penguin</EntityType>
       <Title>
         {penguin.name}
         <Status status={penguin.status}>{penguin.status}</Status>
