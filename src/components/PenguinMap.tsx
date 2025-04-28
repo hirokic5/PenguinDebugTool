@@ -478,7 +478,7 @@ const PenguinMap = () => {
           
           // Convert world coordinates to canvas coordinates
           const canvasX = mapValue(worldX, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
-          const canvasY = mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+          const canvasY = canvas.height - mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
           
           const color = getPenguinColor(penguin);
           const baseSize = leaderNames.includes(penguin.name) ? 12 : 8; // リーダーはより大きく
@@ -576,7 +576,7 @@ const PenguinMap = () => {
           
           // Convert world coordinates to canvas coordinates
           const canvasX = mapValue(worldX, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
-          const canvasY = mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+          const canvasY = canvas.height - mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
           
           // Get color based on enemy ID and state
           const enemyColor = getEnemyColor(enemy.enemyId, enemy.isAttacking);
