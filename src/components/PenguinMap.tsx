@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import sceneConfigs from '../config/sceneConfigs.json';
 import { SceneConfig } from '../types/sceneConfig';
+import { LeaderPathDrawer, PathPoint } from './LeaderPathDrawer';
 
 interface PenguinData {
   penguinId: string;
@@ -183,6 +184,70 @@ const SceneSelector = styled.div`
   }
 `;
 
+const PathControls = styled.div`
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+  
+  .path-length-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    select {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+  }
+`;
+
 const PenguinMap = () => {
   const [penguins, setPenguins] = useState<PenguinData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -194,6 +259,18 @@ const PenguinMap = () => {
   });
   const [currentScene, setCurrentScene] = useState<string>("Proto");
   const sceneConfig = sceneConfigs.scenes[currentScene] as SceneConfig;
+  
+  // リーダーペンギンの経路を保存するための状態
+  const [leaderPaths, setLeaderPaths] = useState<Record<string, PathPoint[]>>({
+    'Luca': [],
+    'Miro': [],
+    'Ellie': [],
+    'Sora': []
+  });
+  
+  // 経路表示の設定
+  const [showPaths, setShowPaths] = useState<boolean>(true);
+  const [pathMaxLength, setPathMaxLength] = useState<number>(100); // 経路の最大ポイント数
 
   // WebSocket接続の設定
   useEffect(() => {
@@ -213,6 +290,29 @@ const PenguinMap = () => {
           if (data.type === 'penguinUpdate') {
             console.log('Penguin data:', data.penguins);
             setPenguins(data.penguins);
+            
+            // リーダーペンギンの位置を記録
+            const leaderNames = ['Luca', 'Miro', 'Ellie', 'Sora'];
+            
+            // 各リーダーペンギンの位置を更新
+            setLeaderPaths(prevPaths => {
+              let newPaths = { ...prevPaths };
+              
+              leaderNames.forEach(leaderName => {
+                const leader = data.penguins.find(p => p.name === leaderName);
+                if (leader) {
+                  newPaths = LeaderPathDrawer.addPointToPath(
+                    newPaths,
+                    leaderName,
+                    leader.position.x,
+                    leader.position.z,
+                    pathMaxLength
+                  );
+                }
+              });
+              
+              return newPaths;
+            });
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
@@ -241,6 +341,20 @@ const PenguinMap = () => {
       }
     };
   }, []);
+
+  // 経路描画のトグル
+  const togglePathVisibility = () => {
+    setShowPaths(!showPaths);
+  };
+  
+  // 経路の最大長を変更
+  const changePathMaxLength = (newLength: number) => {
+    setPathMaxLength(newLength);
+    // 既存の経路を新しい最大長に調整
+    setLeaderPaths(prevPaths => 
+      LeaderPathDrawer.limitPathsLength(prevPaths, newLength)
+    );
+  };
 
   // マップの描画
   useEffect(() => {
@@ -353,6 +467,21 @@ const PenguinMap = () => {
         z: { min: Math.min(...zCoords), max: Math.max(...zCoords) }
       });
     }
+    
+    // リーダーペンギンの経路を描画
+    if (showPaths) {
+      // リーダーごとの経路色
+      const pathColors = {
+        'Luca': '#9C27B0',  // 紫
+        'Miro': '#2196F3',  // 青
+        'Ellie': '#FF9800', // オレンジ
+        'Sora': '#4CAF50'   // 緑
+      };
+      
+      // LeaderPathDrawerを使用して経路を描画
+      const pathDrawer = new LeaderPathDrawer(ctx, scaleX, scaleZ, pathColors);
+      pathDrawer.drawPaths(leaderPaths);
+    }
 
     // リーダーの名前リスト
     const leaderNames = ['Luca', 'Miro', 'Ellie', 'Sora'];
@@ -462,7 +591,7 @@ const PenguinMap = () => {
     });
 
     // キャンバス上の凡例は削除
-  }, [penguins]);
+  }, [penguins, leaderPaths, showPaths, currentScene]);
 
   return (
     <MapContainer>
@@ -480,6 +609,34 @@ const PenguinMap = () => {
             ))}
           </select>
         </SceneSelector>
+        
+        <PathControls>
+          <div>
+            <label className="toggle-switch">
+              <input 
+                type="checkbox" 
+                checked={showPaths} 
+                onChange={togglePathVisibility} 
+              />
+              <span className="slider"></span>
+            </label>
+            <span style={{ marginLeft: '10px' }}>リーダー経路表示</span>
+          </div>
+          
+          <div className="path-length-control">
+            <span>経路の長さ:</span>
+            <select 
+              value={pathMaxLength} 
+              onChange={(e) => changePathMaxLength(Number(e.target.value))}
+            >
+              <option value="50">50 ポイント</option>
+              <option value="100">100 ポイント</option>
+              <option value="200">200 ポイント</option>
+              <option value="500">500 ポイント</option>
+            </select>
+          </div>
+        </PathControls>
+        
         <Canvas ref={canvasRef} width={800} height={800} />
         <CoordinateInfo>
           <h3>座標範囲</h3>
@@ -564,6 +721,26 @@ const PenguinMap = () => {
           </div>
         </div>
 
+        <div className="legend-section">
+          <h3>リーダー経路</h3>
+          <div className="legend-item">
+            <div className="color-box" style={{ backgroundColor: '#9C27B0' }} />
+            <span>Luca の経路</span>
+          </div>
+          <div className="legend-item">
+            <div className="color-box" style={{ backgroundColor: '#2196F3' }} />
+            <span>Miro の経路</span>
+          </div>
+          <div className="legend-item">
+            <div className="color-box" style={{ backgroundColor: '#FF9800' }} />
+            <span>Ellie の経路</span>
+          </div>
+          <div className="legend-item">
+            <div className="color-box" style={{ backgroundColor: '#4CAF50' }} />
+            <span>Sora の経路</span>
+          </div>
+        </div>
+        
         <div className="legend-section">
           <h3>リーダー状態 (Luca, Miro, Ellie, Sora)</h3>
           <div className="legend-item">
