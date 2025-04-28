@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import PenguinMonitor from './components/PenguinMonitor';
 import PenguinMap from './components/PenguinMap';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const AppContainer = styled.div`
   padding: 20px;
@@ -57,8 +58,8 @@ function App() {
           </ul>
         </Navigation>
         <Routes>
-          <Route path="/" element={<PenguinMonitor />} />
-          <Route path="/map" element={<PenguinMap />} />
+          <Route path="/" element={<ErrorBoundary><PenguinMonitor /></ErrorBoundary>} />
+          <Route path="/map" element={<ErrorBoundary><PenguinMap /></ErrorBoundary>} />
         </Routes>
       </AppContainer>
     </Router>
