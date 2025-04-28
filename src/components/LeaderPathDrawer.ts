@@ -24,7 +24,7 @@ export class LeaderPathDrawer {
     scaleZ: (z: number) => number,
     pathColors: LeaderPathColors = {
       'Luca': '#9C27B0',  // 紫
-      'Miro': '#2196F3',  // 青
+      'Milo': '#2196F3',  // 青
       'Ellie': '#FF9800', // オレンジ
       'Sora': '#4CAF50'   // 緑
     }

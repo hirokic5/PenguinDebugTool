@@ -263,14 +263,14 @@ const PenguinMap = () => {
   // リーダーペンギンの経路を保存するための状態
   const [leaderPaths, setLeaderPaths] = useState<Record<string, PathPoint[]>>({
     'Luca': [],
-    'Miro': [],
+    'Milo': [],
     'Ellie': [],
     'Sora': []
   });
   
   // 経路表示の設定
   const [showPaths, setShowPaths] = useState<boolean>(true);
-  const [pathMaxLength, setPathMaxLength] = useState<number>(100); // 経路の最大ポイント数
+  const [pathMaxLength, setPathMaxLength] = useState<number>(250); // 経路の最大ポイント数
 
   // WebSocket接続の設定
   useEffect(() => {
@@ -292,7 +292,7 @@ const PenguinMap = () => {
             setPenguins(data.penguins);
             
             // リーダーペンギンの位置を記録
-            const leaderNames = ['Luca', 'Miro', 'Ellie', 'Sora'];
+            const leaderNames = ['Luca', 'Milo', 'Ellie', 'Sora'];
             
             // 各リーダーペンギンの位置を更新
             setLeaderPaths(prevPaths => {
@@ -473,7 +473,7 @@ const PenguinMap = () => {
       // リーダーごとの経路色
       const pathColors = {
         'Luca': '#9C27B0',  // 紫
-        'Miro': '#2196F3',  // 青
+        'Milo': '#2196F3',  // 青
         'Ellie': '#FF9800', // オレンジ
         'Sora': '#4CAF50'   // 緑
       };
@@ -484,7 +484,7 @@ const PenguinMap = () => {
     }
 
     // リーダーの名前リスト
-    const leaderNames = ['Luca', 'Miro', 'Ellie', 'Sora'];
+    const leaderNames = ['Luca', 'Milo', 'Ellie', 'Sora'];
 
     // ペンギンの状態に応じた色を取得する関数
     const getPenguinColor = (penguin: PenguinData): string => {
@@ -629,10 +629,9 @@ const PenguinMap = () => {
               value={pathMaxLength} 
               onChange={(e) => changePathMaxLength(Number(e.target.value))}
             >
-              <option value="50">50 ポイント</option>
-              <option value="100">100 ポイント</option>
-              <option value="200">200 ポイント</option>
+              <option value="250">250 ポイント</option>
               <option value="500">500 ポイント</option>
+              <option value="1000">1000 ポイント</option>
             </select>
           </div>
         </PathControls>
@@ -667,10 +666,10 @@ const PenguinMap = () => {
       <LegendContainer>
         <FollowersGraph>
           <h3>リーダーごとのフォロワー数</h3>
-          {['Luca', 'Miro', 'Ellie', 'Sora'].map(leaderName => {
+          {['Luca', 'Milo', 'Ellie', 'Sora'].map(leaderName => {
             const leader = penguins.find(p => p.name === leaderName);
             const followerCount = leader?.followerCount || 0;
-            const maxFollowers = Math.max(...penguins.filter(p => ['Luca', 'Miro', 'Ellie', 'Sora'].includes(p.name)).map(p => p.followerCount || 0));
+            const maxFollowers = Math.max(...penguins.filter(p => ['Luca', 'Milo', 'Ellie', 'Sora'].includes(p.name)).map(p => p.followerCount || 0));
             const percentage = maxFollowers > 0 ? (followerCount / maxFollowers) * 100 : 0;
 
             return (
@@ -729,7 +728,7 @@ const PenguinMap = () => {
           </div>
           <div className="legend-item">
             <div className="color-box" style={{ backgroundColor: '#2196F3' }} />
-            <span>Miro の経路</span>
+            <span>Milo の経路</span>
           </div>
           <div className="legend-item">
             <div className="color-box" style={{ backgroundColor: '#FF9800' }} />
@@ -742,7 +741,7 @@ const PenguinMap = () => {
         </div>
         
         <div className="legend-section">
-          <h3>リーダー状態 (Luca, Miro, Ellie, Sora)</h3>
+          <h3>リーダー状態 (Luca, Milo, Ellie, Sora)</h3>
           <div className="legend-item">
             <div className="color-box" style={{ backgroundColor: '#9C27B0' }} />
             <span>リーダー行動中 (Status: Leading)</span>
