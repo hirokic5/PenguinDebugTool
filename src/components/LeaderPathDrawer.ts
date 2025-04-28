@@ -40,20 +40,31 @@ export class LeaderPathDrawer {
    * @param leaderPaths リーダー名をキーとした経路ポイントの配列、またはMap、または[key, value]のエントリー配列
    */
   drawPaths(leaderPaths: Record<string, PathPoint[]> | Map<string, PathPoint[]> | Array<[string, PathPoint[]]>): void {
+    console.log('LeaderPathDrawer.drawPaths called with:', {
+      type: leaderPaths instanceof Map ? 'Map' : Array.isArray(leaderPaths) ? 'Array' : 'Object',
+      data: leaderPaths
+    });
+    
     // 各リーダーの経路を描画
     if (leaderPaths instanceof Map) {
       // Mapの場合
+      console.log('Processing as Map');
       leaderPaths.forEach((path, leaderName) => {
+        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
         this.drawSinglePath(leaderName, path);
       });
     } else if (Array.isArray(leaderPaths)) {
       // [key, value]のエントリー配列の場合
+      console.log('Processing as Array of entries');
       leaderPaths.forEach(([leaderName, path]) => {
+        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
         this.drawSinglePath(leaderName, path);
       });
     } else {
       // 通常のオブジェクトの場合
+      console.log('Processing as Object');
       Object.entries(leaderPaths).forEach(([leaderName, path]) => {
+        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
         this.drawSinglePath(leaderName, path);
       });
     }
@@ -65,9 +76,15 @@ export class LeaderPathDrawer {
    * @param path 経路ポイントの配列
    */
   private drawSinglePath(leaderName: string, path: PathPoint[]): void {
-    if (path.length < 2) return; // 少なくとも2点必要
+    console.log(`drawSinglePath for ${leaderName} with ${path.length} points`);
+    
+    if (path.length < 2) {
+      console.log(`Skipping path for ${leaderName}: Not enough points (${path.length})`);
+      return; // 少なくとも2点必要
+    }
     
     const color = this.pathColors[leaderName] || '#000000';
+    console.log(`Using color for ${leaderName}: ${color}`);
     
     this.ctx.beginPath();
     this.ctx.strokeStyle = color;
@@ -76,21 +93,31 @@ export class LeaderPathDrawer {
     
     // 最初のポイントに移動
     const firstPoint = path[0];
-    this.ctx.moveTo(this.scaleX(firstPoint.x), this.scaleZ(firstPoint.z));
+    const firstX = this.scaleX(firstPoint.x);
+    const firstZ = this.scaleZ(firstPoint.z);
+    console.log(`First point: original(${firstPoint.x}, ${firstPoint.z}), scaled(${firstX}, ${firstZ})`);
+    this.ctx.moveTo(firstX, firstZ);
     
     // 残りのポイントを線で結ぶ
     for (let i = 1; i < path.length; i++) {
       const point = path[i];
-      this.ctx.lineTo(this.scaleX(point.x), this.scaleZ(point.z));
+      const scaledX = this.scaleX(point.x);
+      const scaledZ = this.scaleZ(point.z);
+      console.log(`Point ${i}: original(${point.x}, ${point.z}), scaled(${scaledX}, ${scaledZ})`);
+      this.ctx.lineTo(scaledX, scaledZ);
     }
     
     this.ctx.stroke();
+    console.log(`Path stroke completed for ${leaderName}`);
     
     // 経路の終点（最新の位置）に小さな円を描画
     if (path.length > 0) {
       const lastPoint = path[path.length - 1];
+      const lastX = this.scaleX(lastPoint.x);
+      const lastZ = this.scaleZ(lastPoint.z);
+      console.log(`Drawing end circle at: original(${lastPoint.x}, ${lastPoint.z}), scaled(${lastX}, ${lastZ})`);
       this.ctx.beginPath();
-      this.ctx.arc(this.scaleX(lastPoint.x), this.scaleZ(lastPoint.z), 3, 0, Math.PI * 2);
+      this.ctx.arc(lastX, lastZ, 3, 0, Math.PI * 2);
       this.ctx.fillStyle = color;
       this.ctx.fill();
     }

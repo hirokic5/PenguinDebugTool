@@ -131,7 +131,25 @@ export const useMapRenderer = (props: MapRendererProps) => {
       
       // Draw leader paths if enabled
       if (showLeaderPaths && leaderPathDrawerRef.current) {
+        // デバッグログ: 経路データの内容を確認
+        console.log('Leader paths data:', {
+          mapSize: leaderPaths.size,
+          entries: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+            leaderName: key,
+            pathLength: path.length,
+            firstPoint: path.length > 0 ? path[0] : null,
+            lastPoint: path.length > 0 ? path[path.length - 1] : null
+          }))
+        });
+        
+        // 経路描画の呼び出し
         leaderPathDrawerRef.current.drawPaths(Array.from(leaderPaths.entries()));
+        console.log('drawPaths called with LeaderPathDrawer instance:', leaderPathDrawerRef.current);
+      } else {
+        console.log('Leader paths not drawn because:', { 
+          showLeaderPaths, 
+          hasDrawer: !!leaderPathDrawerRef.current 
+        });
       }
       
       // Draw penguins

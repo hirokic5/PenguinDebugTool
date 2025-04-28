@@ -47,6 +47,13 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
             
             // Update leader paths
             const newLeaderPaths = new Map<string, PathPoint[]>(leaderPaths);
+            console.log('Current leader paths before update:', {
+              mapSize: leaderPaths.size,
+              paths: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+                name: key,
+                length: path.length
+              }))
+            });
             
             // リーダーペンギンの位置を記録
             const leaderNames = ['Luca', 'Milo', 'Ellie', 'Sora'];
@@ -57,11 +64,24 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                 const pathKey = penguin.name || penguin.penguinId;
                 const existingPath = newLeaderPaths.get(pathKey) || [];
                 
+                console.log(`Processing penguin ${pathKey}:`, {
+                  isLeader: leaderNames.includes(penguin.name),
+                  isPlayable: penguin.isPlayable,
+                  followerCount: penguin.followerCount,
+                  position: penguin.position,
+                  existingPathLength: existingPath.length
+                });
+                
                 // Add new point if position changed significantly
                 const lastPoint = existingPath[existingPath.length - 1];
                 if (!lastPoint || 
                     Math.abs(lastPoint.x - penguin.position.x) > 0.5 || 
                     Math.abs(lastPoint.z - penguin.position.z) > 0.5) {
+                  
+                  console.log(`Adding new point for ${pathKey}:`, {
+                    position: penguin.position,
+                    lastPoint: lastPoint ? { x: lastPoint.x, z: lastPoint.z } : 'none'
+                  });
                   
                   const newPath = [...existingPath, {
                     x: penguin.position.x,
@@ -72,12 +92,25 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                   // Limit path length
                   if (newPath.length > pathMaxLength) {
                     newPath.shift();
+                    console.log(`Path for ${pathKey} exceeded max length, shifted oldest point`);
                   }
                   
                   newLeaderPaths.set(pathKey, newPath);
+                  console.log(`Updated path for ${pathKey}, new length: ${newPath.length}`);
+                } else {
+                  console.log(`No significant position change for ${pathKey}, skipping point addition`);
                 }
               }
             });
+            
+            console.log('Updated leader paths:', {
+              mapSize: newLeaderPaths.size,
+              paths: Array.from(newLeaderPaths.entries()).map(([key, path]) => ({
+                name: key,
+                length: path.length
+              }))
+            });
+            
             setLeaderPaths(newLeaderPaths);
             
             // 座標情報を更新
