@@ -33,6 +33,11 @@ export class LeaderPathDrawer {
     this.scaleX = scaleX;
     this.scaleZ = scaleZ;
     this.pathColors = pathColors;
+    
+    // Log the scaling functions to verify they're working correctly
+    console.log('LeaderPathDrawer initialized with scaling functions:');
+    console.log('scaleX(0) =', scaleX(0), 'scaleX(10) =', scaleX(10));
+    console.log('scaleZ(0) =', scaleZ(0), 'scaleZ(10) =', scaleZ(10));
   }
 
   /**

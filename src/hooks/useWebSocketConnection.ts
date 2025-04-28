@@ -91,6 +91,18 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                   existingPathLength: existingPath.length
                 });
                 
+                // If this is a new path (no points yet), add an initial point even if it doesn't move
+                // This ensures we have at least 2 points for drawing
+                if (existingPath.length === 0) {
+                  console.log(`Adding initial point for new path ${pathKey}`);
+                  // Add the same point twice to ensure we have at least 2 points
+                  existingPath.push({
+                    x: penguin.position.x,
+                    z: penguin.position.z,
+                    timestamp: Date.now() - 100 // Slightly older timestamp
+                  });
+                }
+                
                 // Add new point if position changed significantly
                 const lastPoint = existingPath[existingPath.length - 1];
                 if (!lastPoint || 
@@ -160,6 +172,18 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
               if (leaderNames.includes(penguin.name)) {
                 const pathKey = penguin.name;
                 const existingPath = newLeaderPaths.get(pathKey) || [];
+                
+                // If this is a new path (no points yet), add an initial point even if it doesn't move
+                // This ensures we have at least 2 points for drawing
+                if (existingPath.length === 0) {
+                  console.log(`Adding initial point for new path ${pathKey}`);
+                  // Add the same point twice to ensure we have at least 2 points
+                  existingPath.push({
+                    x: penguin.position.x,
+                    z: penguin.position.z,
+                    timestamp: Date.now() - 100 // Slightly older timestamp
+                  });
+                }
                 
                 // Add new point if position changed significantly
                 const lastPoint = existingPath[existingPath.length - 1];
