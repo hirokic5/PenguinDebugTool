@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PenguinData, EnemyData, WebSocketMessage } from '../types/entityTypes';
 import { PathPoint } from '../components/LeaderPathDrawer';
 
@@ -23,10 +23,24 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
   const [enemies, setEnemies] = useState<EnemyData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [leaderPaths, setLeaderPaths] = useState<Map<string, PathPoint[]>>(new Map());
+  // useRefを使用して最新の状態を参照できるようにする
+  const leaderPathsRef = useRef<Map<string, PathPoint[]>>(new Map());
   const [coordinates, setCoordinates] = useState({
     x: { min: 0, max: 0 },
     z: { min: 0, max: 0 }
   });
+
+  // leaderPathsが更新されたらrefも更新
+  useEffect(() => {
+    leaderPathsRef.current = leaderPaths;
+    console.log('leaderPathsRef updated from state:', {
+      mapSize: leaderPaths.size,
+      paths: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+        name: key,
+        length: path.length
+      }))
+    });
+  }, [leaderPaths]);
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -45,11 +59,16 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
             setPenguins(data.penguins || []);
             setEnemies(data.enemies || []);
             
-            // Update leader paths
-            const newLeaderPaths = new Map<string, PathPoint[]>(leaderPaths);
-            console.log('Current leader paths before update:', {
-              mapSize: leaderPaths.size,
-              paths: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+            // Update leader paths - 深いコピーを作成
+            const newLeaderPaths = new Map<string, PathPoint[]>();
+            // 現在の経路データを深いコピーで複製
+            leaderPathsRef.current.forEach((path, key) => {
+              newLeaderPaths.set(key, [...path]); // 配列の新しいコピーを作成
+            });
+            
+            console.log('Current leader paths before update (from ref):', {
+              mapSize: leaderPathsRef.current.size,
+              paths: Array.from(leaderPathsRef.current.entries()).map(([key, path]) => ({
                 name: key,
                 length: path.length
               }))
@@ -111,7 +130,9 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
               }))
             });
             
+            // 状態更新と同時にrefも更新（非同期更新の問題を回避）
             setLeaderPaths(newLeaderPaths);
+            leaderPathsRef.current = newLeaderPaths;
             
             // 座標情報を更新
             if (data.penguins.length > 0) {
@@ -128,7 +149,12 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
             
             // リーダーペンギンの位置を記録
             const leaderNames = ['Luca', 'Milo', 'Ellie', 'Sora'];
-            const newLeaderPaths = new Map<string, PathPoint[]>(leaderPaths);
+            
+            // 深いコピーを作成
+            const newLeaderPaths = new Map<string, PathPoint[]>();
+            leaderPathsRef.current.forEach((path, key) => {
+              newLeaderPaths.set(key, [...path]); // 配列の新しいコピーを作成
+            });
             
             data.penguins.forEach(penguin => {
               if (leaderNames.includes(penguin.name)) {
@@ -156,7 +182,10 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                 }
               }
             });
+            
+            // 状態更新と同時にrefも更新
             setLeaderPaths(newLeaderPaths);
+            leaderPathsRef.current = newLeaderPaths;
             
             // 座標情報を更新
             if (data.penguins.length > 0) {
