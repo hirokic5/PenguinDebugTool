@@ -167,7 +167,11 @@ const PenguinMap = () => {
     
     // Initialize leader path drawer
     if (!leaderPathDrawerRef.current) {
-      leaderPathDrawerRef.current = new LeaderPathDrawer(canvas);
+      // Create mapping functions for coordinates
+      const mapX = (x: number) => mapValue(x, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
+      const mapZ = (z: number) => mapValue(z, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+      
+      leaderPathDrawerRef.current = new LeaderPathDrawer(ctx, mapX, mapZ);
     }
     
     const draw = () => {

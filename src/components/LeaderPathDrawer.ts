@@ -37,13 +37,21 @@ export class LeaderPathDrawer {
 
   /**
    * リーダーペンギンの経路を描画する
-   * @param leaderPaths リーダー名をキーとした経路ポイントの配列
+   * @param leaderPaths リーダー名をキーとした経路ポイントの配列またはMap.entriesの配列
    */
-  drawPaths(leaderPaths: Record<string, PathPoint[]>): void {
-    // 各リーダーの経路を描画
-    Object.entries(leaderPaths).forEach(([leaderName, path]) => {
-      this.drawSinglePath(leaderName, path);
-    });
+  drawPaths(leaderPaths: Record<string, PathPoint[]> | [string, PathPoint[]][]): void {
+    // 配列形式（Map.entriesの結果）の場合
+    if (Array.isArray(leaderPaths)) {
+      leaderPaths.forEach(([leaderName, path]) => {
+        this.drawSinglePath(leaderName, path);
+      });
+    } 
+    // オブジェクト形式の場合
+    else {
+      Object.entries(leaderPaths).forEach(([leaderName, path]) => {
+        this.drawSinglePath(leaderName, path);
+      });
+    }
   }
 
   /**
