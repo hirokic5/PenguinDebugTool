@@ -6,7 +6,15 @@ export default defineConfig({
   server: {
     port: 52260,
     host: '0.0.0.0',
-    cors: true
+    cors: true,
+    hmr: {
+      overlay: true, // Enable error overlay
+    },
   },
   base: '/',
+  logLevel: 'info', // Options: 'info', 'warn', 'error', 'silent'
+  clearScreen: false, // Prevent clearing console
+  build: {
+    sourcemap: true, // Enable sourcemaps
+  },
 });

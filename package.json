@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node --max-old-space-size=8192 server.js",
-    "dev": "vite",
+    "dev": "vite --debug --logLevel info",
+    "dev:verbose": "vite --debug --logLevel info",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
