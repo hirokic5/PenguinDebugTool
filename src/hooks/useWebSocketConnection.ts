@@ -33,13 +33,13 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
   // leaderPathsが更新されたらrefも更新
   useEffect(() => {
     leaderPathsRef.current = leaderPaths;
-    console.log('leaderPathsRef updated from state:', {
-      mapSize: leaderPaths.size,
-      paths: Array.from(leaderPaths.entries()).map(([key, path]) => ({
-        name: key,
-        length: path.length
-      }))
-    });
+    // console.log('leaderPathsRef updated from state:', {
+    //   mapSize: leaderPaths.size,
+    //   paths: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+    //     name: key,
+    //     length: path.length
+    //   }))
+    // });
   }, [leaderPaths]);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
       const socket = new WebSocket(`ws://${host}:52697`);
 
       socket.onopen = () => {
-        console.log('Connected to WebSocket server');
+        // console.log('Connected to WebSocket server');
         setIsConnected(true);
       };
 
@@ -83,13 +83,27 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                 const pathKey = penguin.name || penguin.penguinId;
                 const existingPath = newLeaderPaths.get(pathKey) || [];
                 
-                console.log(`Processing penguin ${pathKey}:`, {
-                  isLeader: leaderNames.includes(penguin.name),
-                  isPlayable: penguin.isPlayable,
-                  followerCount: penguin.followerCount,
-                  position: penguin.position,
-                  existingPathLength: existingPath.length
-                });
+                // Miloの場合は詳細なログを出力
+                const isMilo = penguin.name === 'Milo';
+                
+                if (isMilo) {
+                  console.log(`[WebSocket] Milo data received:`, {
+                    position: penguin.position,
+                    status: penguin.status,
+                    currentTarget: penguin.currentTarget,
+                    followerCount: penguin.followerCount,
+                    existingPathLength: existingPath.length,
+                    lastPathPoint: existingPath.length > 0 ? existingPath[existingPath.length - 1] : 'none'
+                  });
+                } else {
+                  // console.log(`Processing penguin ${pathKey}:`, {
+                  //   isLeader: leaderNames.includes(penguin.name),
+                  //   isPlayable: penguin.isPlayable,
+                  //   followerCount: penguin.followerCount,
+                  //   position: penguin.position,
+                  //   existingPathLength: existingPath.length
+                  // });
+                }
                 
                 // Add new point if position changed significantly
                 const lastPoint = existingPath[existingPath.length - 1];
@@ -97,10 +111,21 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                     Math.abs(lastPoint.x - penguin.position.x) > 0.5 || 
                     Math.abs(lastPoint.z - penguin.position.z) > 0.5) {
                   
-                  console.log(`Adding new point for ${pathKey}:`, {
-                    position: penguin.position,
-                    lastPoint: lastPoint ? { x: lastPoint.x, z: lastPoint.z } : 'none'
-                  });
+                  if (isMilo) {
+                    console.log(`[WebSocket] Adding new point for Milo:`, {
+                      position: penguin.position,
+                      lastPoint: lastPoint ? { x: lastPoint.x, z: lastPoint.z, age: (Date.now() - lastPoint.timestamp) / 1000 + 's ago' } : 'none',
+                      positionDiff: lastPoint ? { 
+                        x: Math.abs(lastPoint.x - penguin.position.x), 
+                        z: Math.abs(lastPoint.z - penguin.position.z) 
+                      } : 'none'
+                    });
+                  } else {
+                    // console.log(`Adding new point for ${pathKey}:`, {
+                    //   position: penguin.position,
+                    //   lastPoint: lastPoint ? { x: lastPoint.x, z: lastPoint.z } : 'none'
+                    // });
+                  }
                   
                   const newPath = [...existingPath, {
                     x: penguin.position.x,
@@ -111,24 +136,36 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
                   // Limit path length
                   if (newPath.length > pathMaxLength) {
                     newPath.shift();
-                    console.log(`Path for ${pathKey} exceeded max length, shifted oldest point`);
+                    // console.log(`Path for ${pathKey} exceeded max length, shifted oldest point`);
                   }
                   
                   newLeaderPaths.set(pathKey, newPath);
-                  console.log(`Updated path for ${pathKey}, new length: ${newPath.length}`);
+                  
+                  if (isMilo) {
+                    console.log(`[WebSocket] Updated Milo's path, new length: ${newPath.length}, latest point:`, newPath[newPath.length - 1]);
+                  } else {
+                    // console.log(`Updated path for ${pathKey}, new length: ${newPath.length}`);
+                  }
                 } else {
-                  console.log(`No significant position change for ${pathKey}, skipping point addition`);
+                  if (isMilo) {
+                    console.log(`[WebSocket] No significant position change for Milo, skipping point addition. Diff:`, {
+                      x: lastPoint ? Math.abs(lastPoint.x - penguin.position.x) : 'no last point',
+                      z: lastPoint ? Math.abs(lastPoint.z - penguin.position.z) : 'no last point'
+                    });
+                  } else {
+                    // console.log(`No significant position change for ${pathKey}, skipping point addition`);
+                  }
                 }
               }
             });
             
-            console.log('Updated leader paths:', {
-              mapSize: newLeaderPaths.size,
-              paths: Array.from(newLeaderPaths.entries()).map(([key, path]) => ({
-                name: key,
-                length: path.length
-              }))
-            });
+            // console.log('Updated leader paths:', {
+            //   mapSize: newLeaderPaths.size,
+            //   paths: Array.from(newLeaderPaths.entries()).map(([key, path]) => ({
+            //     name: key,
+            //     length: path.length
+            //   }))
+            // });
             
             // 状態更新と同時にrefも更新（非同期更新の問題を回避）
             setLeaderPaths(newLeaderPaths);
@@ -198,18 +235,18 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
             }
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          // console.error('Error parsing WebSocket message:', error);
         }
       };
 
       socket.onclose = () => {
-        console.log('Disconnected from WebSocket server');
+        // console.log('Disconnected from WebSocket server');
         setIsConnected(false);
         setTimeout(connectWebSocket, 2000);
       };
 
       socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // console.error('WebSocket error:', error);
       };
     };
 

@@ -40,14 +40,18 @@ export const useMapRenderer = (props: MapRendererProps) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Initialize leader path drawer
-    if (!leaderPathDrawerRef.current) {
-      // Create mapping functions for coordinates
-      const mapX = (x: number) => mapValue(x, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
-      const mapZ = (z: number) => mapValue(z, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
-      
-      leaderPathDrawerRef.current = new LeaderPathDrawer(ctx, mapX, mapZ);
-    }
+    // Always initialize/update leader path drawer when currentConfig changes
+    // Create mapping functions for coordinates
+    const mapX = (x: number) => mapValue(x, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
+    const mapZ = (z: number) => canvas.height - mapValue(z, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+    
+    // 常に新しい設定で初期化する
+    leaderPathDrawerRef.current = new LeaderPathDrawer(ctx, mapX, mapZ);
+    
+    console.log('LeaderPathDrawer re-initialized with new config:', {
+      worldBounds: currentConfig.worldBounds,
+      canvasSize: { width: canvas.width, height: canvas.height }
+    });
     
     const draw = () => {
       if (!ctx || !canvas) return;
@@ -132,30 +136,48 @@ export const useMapRenderer = (props: MapRendererProps) => {
       // Draw leader paths if enabled
       if (showLeaderPaths && leaderPathDrawerRef.current) {
         // デバッグログ: 経路データの内容を確認
-        console.log('Leader paths data:', {
-          mapSize: leaderPaths.size,
-          entries: Array.from(leaderPaths.entries()).map(([key, path]) => ({
-            leaderName: key,
-            pathLength: path.length,
-            firstPoint: path.length > 0 ? path[0] : null,
-            lastPoint: path.length > 0 ? path[path.length - 1] : null
-          }))
-        });
+        // console.log('Leader paths data:', {
+        //   mapSize: leaderPaths.size,
+        //   entries: Array.from(leaderPaths.entries()).map(([key, path]) => ({
+        //     leaderName: key,
+        //     pathLength: path.length,
+        //     firstPoint: path.length > 0 ? path[0] : null,
+        //     lastPoint: path.length > 0 ? path[path.length - 1] : null
+        //   }))
+        // });
         
         // 経路描画の呼び出し
         leaderPathDrawerRef.current.drawPaths(Array.from(leaderPaths.entries()));
-        console.log('drawPaths called with LeaderPathDrawer instance:', leaderPathDrawerRef.current);
+        // console.log('drawPaths called with LeaderPathDrawer instance:', leaderPathDrawerRef.current);
       } else {
-        console.log('Leader paths not drawn because:', { 
-          showLeaderPaths, 
-          hasDrawer: !!leaderPathDrawerRef.current 
-        });
+        // console.log('Leader paths not drawn because:', { 
+        //   showLeaderPaths, 
+        //   hasDrawer: !!leaderPathDrawerRef.current 
+        // });
       }
       
       // Draw penguins
       if (showPenguins) {
         // リーダーの名前リスト
         const leaderNames = ['Luca', 'Milo', 'Ellie', 'Sora'];
+        
+        // Miloの現在位置をログに出力（キャンバス座標で）
+        const milo = penguins.find(p => p.name === 'Milo');
+        if (milo) {
+          // ワールド座標をキャンバス座標に変換
+          const worldX = milo.position.x;
+          const worldZ = milo.position.z;
+          const canvasX = mapValue(worldX, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
+          const canvasY = canvas.height - mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+          
+          console.log('Milo current position:', {
+            world: { x: worldX, z: worldZ },
+            canvas: { x: canvasX, y: canvasY }, // キャンバスではzはy座標として描画
+            status: milo.status,
+            currentTarget: milo.currentTarget,
+            followerCount: milo.followerCount
+          });
+        }
 
         penguins.forEach(penguin => {
           const worldX = penguin.position.x;

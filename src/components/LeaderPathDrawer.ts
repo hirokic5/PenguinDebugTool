@@ -1,180 +1,187 @@
 /**
- * リーダーペンギンの経路描画を担当するユーティリティクラス
+ * LeaderPathDrawer.ts
+ * リーダーペンギンの移動経路を描画するためのクラス
  */
 
+/**
+ * 経路上の点を表すインターフェース
+ */
 export interface PathPoint {
   x: number;
   z: number;
   timestamp: number;
 }
 
-export interface LeaderPathColors {
-  [key: string]: string;
-}
-
+/**
+ * リーダーペンギンの移動経路を描画するクラス
+ */
 export class LeaderPathDrawer {
   private ctx: CanvasRenderingContext2D;
-  private scaleX: (x: number) => number;
-  private scaleZ: (z: number) => number;
-  private pathColors: LeaderPathColors;
+  private mapX: (x: number) => number;
+  private mapZ: (z: number) => number;
+  private pathColors: Map<string, string>;
 
+  /**
+   * コンストラクタ
+   * @param ctx キャンバスのコンテキスト
+   * @param mapX X座標をキャンバス座標に変換する関数
+   * @param mapZ Z座標をキャンバス座標に変換する関数
+   */
   constructor(
-    ctx: CanvasRenderingContext2D, 
-    scaleX: (x: number) => number, 
-    scaleZ: (z: number) => number,
-    pathColors: LeaderPathColors = {
-      'Luca': '#9C27B0',  // 紫
-      'Milo': '#2196F3',  // 青
-      'Ellie': '#FF9800', // オレンジ
-      'Sora': '#4CAF50'   // 緑
-    }
+    ctx: CanvasRenderingContext2D,
+    mapX: (x: number) => number,
+    mapZ: (z: number) => number
   ) {
     this.ctx = ctx;
-    this.scaleX = scaleX;
-    this.scaleZ = scaleZ;
-    this.pathColors = pathColors;
+    this.mapX = mapX;
+    this.mapZ = mapZ;
+    this.pathColors = new Map<string, string>();
+    
+    // リーダーごとの経路色を設定
+    this.pathColors.set('Luca', '#9C27B0');    // 紫
+    this.pathColors.set('Milo', '#2196F3');    // 青
+    this.pathColors.set('Ellie', '#FF9800');   // オレンジ
+    this.pathColors.set('Sora', '#4CAF50');    // 緑
   }
 
   /**
-   * リーダーペンギンの経路を描画する
-   * @param leaderPaths リーダー名をキーとした経路ポイントの配列、またはMap、または[key, value]のエントリー配列
+   * 経路を描画する
+   * @param paths 経路データの配列 [リーダー名, 経路点の配列][]
    */
-  drawPaths(leaderPaths: Record<string, PathPoint[]> | Map<string, PathPoint[]> | Array<[string, PathPoint[]]>): void {
-    console.log('LeaderPathDrawer.drawPaths called with:', {
-      type: leaderPaths instanceof Map ? 'Map' : Array.isArray(leaderPaths) ? 'Array' : 'Object',
-      data: leaderPaths
-    });
-    
+  drawPaths(paths: [string, PathPoint[]][]): void {
+    if (!this.ctx) {
+      // console.error('Canvas context is not available');
+      return;
+    }
+
+    // Miloの経路と現在位置を特別にログ出力（キャンバス座標で）
+    const miloPath = paths.find(([name]) => name === 'Milo');
+    if (miloPath && miloPath[1] && miloPath[1].length > 0) {
+      const latestPoint = miloPath[1][miloPath[1].length - 1];
+      // ワールド座標をキャンバス座標に変換
+      const canvasX = this.mapX(latestPoint.x);
+      const canvasZ = this.mapZ(latestPoint.z);
+      console.log('Milo path latest point:', {
+        world: { x: latestPoint.x, z: latestPoint.z },
+        canvas: { x: canvasX, y: canvasZ }, // キャンバスではzはy座標として描画
+        timestamp: new Date(latestPoint.timestamp).toISOString(),
+        age: (Date.now() - latestPoint.timestamp) / 1000 + 's ago'
+      });
+    }
+
     // 各リーダーの経路を描画
-    if (leaderPaths instanceof Map) {
-      // Mapの場合
-      console.log('Processing as Map');
-      leaderPaths.forEach((path, leaderName) => {
-        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
-        this.drawSinglePath(leaderName, path);
-      });
-    } else if (Array.isArray(leaderPaths)) {
-      // [key, value]のエントリー配列の場合
-      console.log('Processing as Array of entries');
-      leaderPaths.forEach(([leaderName, path]) => {
-        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
-        this.drawSinglePath(leaderName, path);
-      });
-    } else {
-      // 通常のオブジェクトの場合
-      console.log('Processing as Object');
-      Object.entries(leaderPaths).forEach(([leaderName, path]) => {
-        console.log(`Drawing path for leader: ${leaderName}, path length: ${path.length}`);
-        this.drawSinglePath(leaderName, path);
-      });
-    }
-  }
+    paths.forEach(([leaderName, path]) => {
+      if (!path || path.length < 2) {
+        return; // 経路点が2つ未満の場合は描画しない
+      }
 
-  /**
-   * 単一のリーダーペンギンの経路を描画する
-   * @param leaderName リーダーの名前
-   * @param path 経路ポイントの配列
-   */
-  private drawSinglePath(leaderName: string, path: PathPoint[]): void {
-    console.log(`drawSinglePath for ${leaderName} with ${path.length} points`);
-    
-    if (path.length < 2) {
-      console.log(`Skipping path for ${leaderName}: Not enough points (${path.length})`);
-      return; // 少なくとも2点必要
-    }
-    
-    const color = this.pathColors[leaderName] || '#000000';
-    console.log(`Using color for ${leaderName}: ${color}`);
-    
-    this.ctx.beginPath();
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = 2;
-    this.ctx.setLineDash([]);
-    
-    // 最初のポイントに移動
-    const firstPoint = path[0];
-    const firstX = this.scaleX(firstPoint.x);
-    const firstZ = this.scaleZ(firstPoint.z);
-    console.log(`First point: original(${firstPoint.x}, ${firstPoint.z}), scaled(${firstX}, ${firstZ})`);
-    this.ctx.moveTo(firstX, firstZ);
-    
-    // 残りのポイントを線で結ぶ
-    for (let i = 1; i < path.length; i++) {
-      const point = path[i];
-      const scaledX = this.scaleX(point.x);
-      const scaledZ = this.scaleZ(point.z);
-      console.log(`Point ${i}: original(${point.x}, ${point.z}), scaled(${scaledX}, ${scaledZ})`);
-      this.ctx.lineTo(scaledX, scaledZ);
-    }
-    
-    this.ctx.stroke();
-    console.log(`Path stroke completed for ${leaderName}`);
-    
-    // 経路の終点（最新の位置）に小さな円を描画
-    if (path.length > 0) {
-      const lastPoint = path[path.length - 1];
-      const lastX = this.scaleX(lastPoint.x);
-      const lastZ = this.scaleZ(lastPoint.z);
-      console.log(`Drawing end circle at: original(${lastPoint.x}, ${lastPoint.z}), scaled(${lastX}, ${lastZ})`);
+      // 経路の色を取得（リーダー名に対応する色がない場合はランダムな色を生成）
+      let color = this.pathColors.get(leaderName);
+      if (!color) {
+        color = this.generateRandomColor(leaderName);
+        this.pathColors.set(leaderName, color);
+      }
+
+      // 経路の透明度を設定（古い点ほど透明に）
+      const now = Date.now();
+      const maxAge = 60000; // 60秒
+      
+      // 経路を描画
       this.ctx.beginPath();
-      this.ctx.arc(lastX, lastZ, 3, 0, Math.PI * 2);
+      
+      // 最初の点に移動
+      const firstPoint = path[0];
+      const firstX = this.mapX(firstPoint.x);
+      const firstZ = this.mapZ(firstPoint.z);
+      this.ctx.moveTo(firstX, firstZ);
+      
+      // 残りの点を線で結ぶ
+      for (let i = 1; i < path.length; i++) {
+        const point = path[i];
+        const x = this.mapX(point.x);
+        const z = this.mapZ(point.z);
+        
+        // 点間の距離が大きすぎる場合は線を引かない（テレポートなどの異常値対策）
+        const prevPoint = path[i - 1];
+        const prevX = this.mapX(prevPoint.x);
+        const prevZ = this.mapZ(prevPoint.z);
+        
+        const distance = Math.sqrt(Math.pow(x - prevX, 2) + Math.pow(z - prevZ, 2));
+        if (distance > 100) { // 画面上で100px以上離れている場合
+          this.ctx.stroke(); // 現在のパスを描画
+          this.ctx.beginPath(); // 新しいパスを開始
+          this.ctx.moveTo(x, z);
+          continue;
+        }
+        
+        // 経過時間に基づいて透明度を計算
+        const age = now - point.timestamp;
+        const alpha = Math.max(0.1, 1 - (age / maxAge));
+        
+        this.ctx.strokeStyle = this.hexToRgba(color, alpha);
+        this.ctx.lineWidth = 2;
+        this.ctx.lineTo(x, z);
+      }
+      
+      this.ctx.stroke();
+      
+      // 経路の終点（最新の位置）に円を描画
+      const lastPoint = path[path.length - 1];
+      const lastX = this.mapX(lastPoint.x);
+      const lastZ = this.mapZ(lastPoint.z);
+      
+      this.ctx.beginPath();
+      this.ctx.arc(lastX, lastZ, 4, 0, Math.PI * 2);
       this.ctx.fillStyle = color;
       this.ctx.fill();
-    }
-  }
-
-  /**
-   * 経路の最大長を制限する
-   * @param paths 現在の経路データ
-   * @param maxLength 最大長
-   * @returns 最大長に制限された経路データ
-   */
-  static limitPathsLength(
-    paths: Record<string, PathPoint[]>, 
-    maxLength: number
-  ): Record<string, PathPoint[]> {
-    const newPaths = { ...paths };
-    
-    Object.keys(newPaths).forEach(key => {
-      newPaths[key] = newPaths[key].slice(-maxLength);
     });
-    
-    return newPaths;
   }
 
   /**
-   * 新しい位置ポイントを経路に追加する
-   * @param paths 現在の経路データ
-   * @param leaderName リーダー名
-   * @param x X座標
-   * @param z Z座標
-   * @param maxLength 経路の最大長
-   * @returns 更新された経路データ
+   * リーダー名に基づいてランダムな色を生成する
+   * @param name リーダー名
+   * @returns 16進数カラーコード
    */
-  static addPointToPath(
-    paths: Record<string, PathPoint[]>,
-    leaderName: string,
-    x: number,
-    z: number,
-    maxLength: number
-  ): Record<string, PathPoint[]> {
-    const newPaths = { ...paths };
-    const currentTime = Date.now();
-    
-    // 前回の位置と同じ場合は追加しない（経路が冗長になるのを防ぐ）
-    const prevPoints = paths[leaderName] || [];
-    const lastPoint = prevPoints.length > 0 ? prevPoints[prevPoints.length - 1] : null;
-    
-    if (!lastPoint || (lastPoint.x !== x || lastPoint.z !== z)) {
-      const newPoint: PathPoint = { x, z, timestamp: currentTime };
-      
-      // 新しい位置を追加し、最大長を超えたら古いポイントを削除
-      newPaths[leaderName] = [
-        ...(newPaths[leaderName] || []), 
-        newPoint
-      ].slice(-maxLength);
+  private generateRandomColor(name: string): string {
+    // 名前の文字コードを使って一貫性のある色を生成
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     
-    return newPaths;
+    // HSLカラーモデルを使用して鮮やかな色を生成
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 70%, 50%)`;
+  }
+
+  /**
+   * 16進数カラーコードをRGBA形式に変換する
+   * @param hex 16進数カラーコード
+   * @param alpha 透明度（0～1）
+   * @returns RGBA形式の色文字列
+   */
+  private hexToRgba(hex: string, alpha: number): string {
+    // HSL形式の場合はそのまま透明度を追加
+    if (hex.startsWith('hsl')) {
+      return hex.replace('hsl', 'hsla').replace(')', `, ${alpha})`);
+    }
+    
+    // 16進数カラーコードの場合はRGBAに変換
+    let r = 0, g = 0, b = 0;
+    
+    // #RGB または #RRGGBB 形式をチェック
+    if (hex.length === 4) {
+      // #RGB 形式
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      // #RRGGBB 形式
+      r = parseInt(hex.substring(1, 3), 16);
+      g = parseInt(hex.substring(3, 5), 16);
+      b = parseInt(hex.substring(5, 7), 16);
+    }
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 }
