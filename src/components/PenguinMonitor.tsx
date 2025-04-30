@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import PenguinCard from './PenguinCard';
 import EnemyCard from './EnemyCard';
-import { PenguinData, EnemyData, WebSocketMessage } from '../types/entityTypes';
+import StaticAreaCard from './StaticAreaCard';
+import { PenguinData, EnemyData, AreaData, WebSocketMessage } from '../types/entityTypes';
 
 const Container = styled.div`
   display: grid;
@@ -50,11 +51,12 @@ const EntityCounter = styled.div`
   color: #666;
 `;
 
-type FilterType = 'all' | 'penguins' | 'enemies';
+type FilterType = 'all' | 'penguins' | 'enemies' | 'areas';
 
 const PenguinMonitor = () => {
   const [penguins, setPenguins] = useState<PenguinData[]>([]);
   const [enemies, setEnemies] = useState<EnemyData[]>([]);
+  const [staticAreas, setStaticAreas] = useState<AreaData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -76,6 +78,7 @@ const PenguinMonitor = () => {
           if (data.type === 'entityUpdate') {
             setPenguins(data.penguins || []);
             setEnemies(data.enemies || []);
+            setStaticAreas(data.staticAreas || []);
           } else if (data.type === 'penguinUpdate') {
             // 後方互換性のため
             setPenguins(data.penguins || []);
@@ -112,16 +115,18 @@ const PenguinMonitor = () => {
   const filteredEntities = () => {
     switch (filter) {
       case 'penguins':
-        return { penguins, enemies: [] };
+        return { penguins, enemies: [], staticAreas: [] };
       case 'enemies':
-        return { penguins: [], enemies };
+        return { penguins: [], enemies, staticAreas: [] };
+      case 'areas':
+        return { penguins: [], enemies: [], staticAreas };
       case 'all':
       default:
-        return { penguins, enemies };
+        return { penguins, enemies, staticAreas };
     }
   };
 
-  const { penguins: filteredPenguins, enemies: filteredEnemies } = filteredEntities();
+  const { penguins: filteredPenguins, enemies: filteredEnemies, staticAreas: filteredStaticAreas } = filteredEntities();
 
   return (
     <>
@@ -148,10 +153,16 @@ const PenguinMonitor = () => {
         >
           Enemies Only
         </FilterButton>
+        <FilterButton 
+          active={filter === 'areas'} 
+          onClick={() => setFilter('areas')}
+        >
+          Areas Only
+        </FilterButton>
       </FilterContainer>
       
       <EntityCounter>
-        Showing {filteredPenguins.length} penguins and {filteredEnemies.length} enemies
+        Showing {filteredPenguins.length} penguins, {filteredEnemies.length} enemies, and {filteredStaticAreas.length} areas
       </EntityCounter>
       
       <Container>
@@ -166,6 +177,13 @@ const PenguinMonitor = () => {
           <EnemyCard
             key={enemy.enemyId}
             enemy={enemy}
+          />
+        ))}
+        
+        {filteredStaticAreas.map(area => (
+          <StaticAreaCard
+            key={area.areaId}
+            area={area}
           />
         ))}
       </Container>

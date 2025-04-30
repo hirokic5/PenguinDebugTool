@@ -49,10 +49,31 @@ export interface EnemyData extends BaseEntityData {
   entityType: 'enemy';
 }
 
+// 静的エリアのデータ
+export interface AreaData {
+  areaId: string;
+  areaType: string; // "Goal", "Cooperation", "Treasure"
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  entityType: 'staticArea';
+  lastUpdate?: number;
+}
+
+// 静的エリア全体のデータ
+export interface StaticAreasData {
+  areas: AreaData[];
+  entityType: 'staticAreas';
+  lastUpdate?: number;
+}
+
 // WebSocketメッセージの型
 export interface WebSocketMessage {
   type: 'entityUpdate';
-  entities: (PenguinData | EnemyData)[];
+  entities: (PenguinData | EnemyData | AreaData)[];
   penguins: PenguinData[];
   enemies: EnemyData[];
+  staticAreas?: AreaData[];
 }
