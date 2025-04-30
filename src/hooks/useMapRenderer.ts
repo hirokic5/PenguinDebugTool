@@ -1,17 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { SceneConfig } from '../types/sceneConfig';
-import { PenguinData, EnemyData } from '../types/entityTypes';
+import { PenguinData, EnemyData, AreaData } from '../types/entityTypes';
 import { LeaderPathDrawer, PathPoint } from '../components/LeaderPathDrawer';
 import { mapValue, getPenguinColor, getEnemyColor } from '../utils/mapUtils';
 
 interface MapRendererProps {
   penguins: PenguinData[];
   enemies: EnemyData[];
+  staticAreas: AreaData[];
   leaderPaths: Map<string, PathPoint[]>;
   currentConfig: SceneConfig;
   showLeaderPaths: boolean;
   showPenguins: boolean;
   showEnemies: boolean;
+  showStaticAreas: boolean;
 }
 
 /**
@@ -23,11 +25,13 @@ export const useMapRenderer = (props: MapRendererProps) => {
   const {
     penguins,
     enemies,
+    staticAreas,
     leaderPaths,
     currentConfig,
     showLeaderPaths,
     showPenguins,
-    showEnemies
+    showEnemies,
+    showStaticAreas
   } = props;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -274,6 +278,48 @@ export const useMapRenderer = (props: MapRendererProps) => {
           ctx.stroke();
         });
       }
+      
+      // Draw static areas
+      if (showStaticAreas && staticAreas.length > 0) {
+        staticAreas.forEach(area => {
+          const worldX = area.position.x;
+          const worldZ = area.position.z;
+          
+          // Convert world coordinates to canvas coordinates
+          const canvasX = mapValue(worldX, currentConfig.worldBounds.minX, currentConfig.worldBounds.maxX, 0, canvas.width);
+          const canvasY = canvas.height - mapValue(worldZ, currentConfig.worldBounds.minZ, currentConfig.worldBounds.maxZ, 0, canvas.height);
+          
+          // エリアタイプに基づいて色を設定
+          let color = 'rgba(0, 0, 255, 0.3)'; // デフォルト青色
+          let size = 15;
+          
+          if (area.areaType === 'Goal') {
+            color = 'rgba(0, 255, 0, 0.3)'; // ゴールエリアは緑色
+            size = 18;
+          } else if (area.areaType === 'Cooperation') {
+            color = 'rgba(255, 165, 0, 0.3)'; // 協力エリアはオレンジ色
+            size = 15;
+          } else if (area.areaType === 'Treasure') {
+            color = 'rgba(255, 215, 0, 0.3)'; // 宝物エリアは金色
+            size = 12;
+          }
+          
+          // エリアを円で描画
+          ctx.beginPath();
+          ctx.arc(canvasX, canvasY, size, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          
+          // エリアタイプを表示
+          ctx.fillStyle = '#000';
+          ctx.font = '10px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(area.areaType, canvasX, canvasY - size - 5);
+        });
+      }
     };
     
     // Draw the map
@@ -295,11 +341,13 @@ export const useMapRenderer = (props: MapRendererProps) => {
   }, [
     penguins, 
     enemies, 
+    staticAreas,
     leaderPaths, 
     currentConfig, 
     showLeaderPaths, 
     showPenguins, 
-    showEnemies
+    showEnemies,
+    showStaticAreas
   ]);
 
   return canvasRef;

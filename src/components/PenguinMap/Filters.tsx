@@ -8,6 +8,8 @@ interface FiltersProps {
   setShowPenguins: (show: boolean) => void;
   showEnemies: boolean;
   setShowEnemies: (show: boolean) => void;
+  showStaticAreas?: boolean;
+  setShowStaticAreas?: (show: boolean) => void;
 }
 
 /**
@@ -19,7 +21,9 @@ const Filters: React.FC<FiltersProps> = ({
   showPenguins,
   setShowPenguins,
   showEnemies,
-  setShowEnemies
+  setShowEnemies,
+  showStaticAreas,
+  setShowStaticAreas
 }) => {
   return (
     <FilterContainer>
@@ -41,6 +45,14 @@ const Filters: React.FC<FiltersProps> = ({
       >
         リーダー経路 {showLeaderPaths ? '✓' : '✗'}
       </FilterButton>
+      {setShowStaticAreas && (
+        <FilterButton
+          active={showStaticAreas || false}
+          onClick={() => setShowStaticAreas(!showStaticAreas)}
+        >
+          静的エリア {showStaticAreas ? '✓' : '✗'}
+        </FilterButton>
+      )}
     </FilterContainer>
   );
 };

@@ -1,16 +1,17 @@
 import React from 'react';
-import { PenguinData, EnemyData } from '../../types/entityTypes';
+import { PenguinData, EnemyData, AreaData } from '../../types/entityTypes';
 import { LegendContainer } from './styles';
 
 interface LegendProps {
   penguins: PenguinData[];
   enemies: EnemyData[];
+  staticAreas?: AreaData[];
 }
 
 /**
  * Legend component for the penguin map
  */
-const Legend: React.FC<LegendProps> = ({ penguins, enemies }) => {
+const Legend: React.FC<LegendProps> = ({ penguins, enemies, staticAreas = [] }) => {
   return (
     <LegendContainer>
       <div className="legend-section">
@@ -86,9 +87,26 @@ const Legend: React.FC<LegendProps> = ({ penguins, enemies }) => {
       </div>
       
       <div className="legend-section">
+        <h3>静的エリア</h3>
+        <div className="legend-item">
+          <div className="color-box" style={{ backgroundColor: 'rgba(0, 255, 0, 0.3)' }} />
+          <span>ゴールエリア</span>
+        </div>
+        <div className="legend-item">
+          <div className="color-box" style={{ backgroundColor: 'rgba(255, 165, 0, 0.3)' }} />
+          <span>協力エリア</span>
+        </div>
+        <div className="legend-item">
+          <div className="color-box" style={{ backgroundColor: 'rgba(255, 215, 0, 0.3)' }} />
+          <span>宝物エリア</span>
+        </div>
+      </div>
+      
+      <div className="legend-section">
         <h3>統計情報</h3>
         <div>ペンギン数: {penguins.length}</div>
         <div>敵の数: {enemies.length}</div>
+        <div>静的エリア数: {staticAreas.length}</div>
       </div>
     </LegendContainer>
   );

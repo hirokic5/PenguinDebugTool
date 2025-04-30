@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { PenguinData, EnemyData, WebSocketMessage } from '../types/entityTypes';
+import { PenguinData, EnemyData, WebSocketMessage, AreaData } from '../types/entityTypes';
 import { PathPoint } from '../components/LeaderPathDrawer';
 
 interface WebSocketConnectionResult {
   penguins: PenguinData[];
   enemies: EnemyData[];
+  staticAreas: AreaData[];
   isConnected: boolean;
   leaderPaths: Map<string, PathPoint[]>;
   coordinates: {
@@ -21,6 +22,7 @@ interface WebSocketConnectionResult {
 export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnectionResult => {
   const [penguins, setPenguins] = useState<PenguinData[]>([]);
   const [enemies, setEnemies] = useState<EnemyData[]>([]);
+  const [staticAreas, setStaticAreas] = useState<AreaData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [leaderPaths, setLeaderPaths] = useState<Map<string, PathPoint[]>>(new Map());
   // useRefを使用して最新の状態を参照できるようにする
@@ -58,6 +60,7 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
           if (data.type === 'entityUpdate') {
             setPenguins(data.penguins || []);
             setEnemies(data.enemies || []);
+            setStaticAreas(data.staticAreas || []);
             
             // Update leader paths - 深いコピーを作成
             const newLeaderPaths = new Map<string, PathPoint[]>();
@@ -256,6 +259,7 @@ export const useWebSocketConnection = (pathMaxLength: number): WebSocketConnecti
   return {
     penguins,
     enemies,
+    staticAreas,
     isConnected,
     leaderPaths,
     coordinates

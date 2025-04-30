@@ -18,6 +18,7 @@ const PenguinMap: React.FC = () => {
   const [showLeaderPaths, setShowLeaderPaths] = useState(true);
   const [showEnemies, setShowEnemies] = useState(true);
   const [showPenguins, setShowPenguins] = useState(true);
+  const [showStaticAreas, setShowStaticAreas] = useState(true);
   const [pathMaxLength, setPathMaxLength] = useState<number>(250); // 経路の最大ポイント数
 
   // Get available scene configurations
@@ -66,6 +67,7 @@ const PenguinMap: React.FC = () => {
   const {
     penguins,
     enemies,
+    staticAreas,
     isConnected,
     leaderPaths,
     coordinates
@@ -75,11 +77,13 @@ const PenguinMap: React.FC = () => {
   const canvasRef = useMapRenderer({
     penguins,
     enemies,
+    staticAreas,
     leaderPaths,
     currentConfig,
     showLeaderPaths,
     showPenguins,
-    showEnemies
+    showEnemies,
+    showStaticAreas
   });
 
   return (
@@ -141,6 +145,8 @@ const PenguinMap: React.FC = () => {
           setShowPenguins={setShowPenguins}
           showEnemies={showEnemies}
           setShowEnemies={setShowEnemies}
+          showStaticAreas={showStaticAreas}
+          setShowStaticAreas={setShowStaticAreas}
         />
         
         <div style={{ position: 'relative' }}>
@@ -157,7 +163,7 @@ const PenguinMap: React.FC = () => {
         <FollowersGraph penguins={penguins} />
       </GridContainer>
       
-      <Legend penguins={penguins} enemies={enemies} />
+      <Legend penguins={penguins} enemies={enemies} staticAreas={staticAreas} />
     </MapContainer>
   );
 };
